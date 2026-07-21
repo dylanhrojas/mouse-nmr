@@ -141,6 +141,7 @@ Columnas en `dpsm.csv`:
 ## Resultados principales
 - Análisis exploratorio que presentó la distribución de los datos (media y desviación estándar), análisis temporal y espacial; se encontró una alta correlación entre `DPSM_heads` y `DPSM_tails` (0.923 y 0.764) y una independencia (-0.004 y 0.009) entre `CHOL_head`y `CHOL_body` para los grupos **Mouse** y **NMR** respectivamente con $r$ de Pearson.
 - Los modelos entrenados durante la validación cruzada alcanzaron valores de F1-score aproximadamente iguales a 1.0, indicando una separación clara entre los dos grupos (Mouse y NMR) basándose en las características moleculares extraídas.
+- Se destaca `XGBOOST` ya que encontró como discriminante principal para los grupos las características: `std_head` y `corr_heads_tails`
 - Los embeddings creados con `t-SNE` y `UMAP` presentan muy buenos resultados en las gráficas y en **Silhouette** ((`CHOL`: `t-SNE`=0.501, `UMAP`=0.598), (`DPSM`: `t-SNE`=0.631, `UMAP`=0.678)) y **Davies-Bouldin** ((`CHOL`: `t-SNE`=0.808, `UMAP`=0.658), (`DPSM`: `t-SNE`=0.526, `UMAP`=0.454)) para ambos tipos de lípidos, siendo `UMAP` con el mejor puntaje. Esto demuestra cohesión y compacidad entre los clústers resultantes.
 
 ## Requisitos
