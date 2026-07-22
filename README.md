@@ -218,6 +218,10 @@ mouse-nmr/
 Nombre: Dylan Hernández Rojas
 GitHub: https://github.com/dylanhrojas
 
+## Licencia
+
+Este proyecto está bajo la licencia MIT.
+
 ## Notas
 
 - Todos los datos provistos están normalizados por el volumen de caja (`artificial_volume`)
