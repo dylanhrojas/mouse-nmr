@@ -144,6 +144,9 @@ Columnas en `dpsm.csv`:
 - Se destaca `XGBOOST` ya que encontró como discriminante principal para los grupos las características: `std_head` y `corr_heads_tails`
 - Los embeddings creados con `t-SNE` y `UMAP` presentan muy buenos resultados en las gráficas y en **Silhouette** ((`CHOL`: `t-SNE`=0.501, `UMAP`=0.598), (`DPSM`: `t-SNE`=0.631, `UMAP`=0.678)) y **Davies-Bouldin** ((`CHOL`: `t-SNE`=0.808, `UMAP`=0.658), (`DPSM`: `t-SNE`=0.526, `UMAP`=0.454)) para ambos tipos de lípidos, siendo `UMAP` con el mejor puntaje. Esto demuestra cohesión y compacidad entre los clústers resultantes.
 
+## Sugerencia para futuro proyecto
+Se puede crear un **Autoencoder Convolucional** para comprimir los mapas (datos crudos) en un embedding denso y capturar automáticamente la estructura molecular.
+
 ## Requisitos
 
 - Python 3.8 o superior
