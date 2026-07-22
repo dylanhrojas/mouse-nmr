@@ -214,6 +214,10 @@ mouse-nmr/
     └── 04_embeddings.ipynb
 ```
 
+## Autor
+Nombre: Dylan Hernández Rojas
+GitHub: https://github.com/dylanhrojas
+
 ## Notas
 
 - Todos los datos provistos están normalizados por el volumen de caja (`artificial_volume`)
