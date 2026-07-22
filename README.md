@@ -11,6 +11,30 @@ El proyecto se enfoca en dos tipos de lípidos:
 
 Para cada tipo de lípido, se entrena un modelo independiente con el objetivo de clasificar correctamente a qué grupo pertenece cada molécula.
 
+## Datos crudos
+
+Los datos crudos fueron generados a partir de simulaciones de dinámica molecular de membranas lipídicas.
+
+**Créditos**: [Naikary Paloma Martínez Velázquez](https://www.linkedin.com/in/naikary-mart%C3%ADnez/) | Proyecto de Tesis - CIMAT Monterrey
+
+### Proceso:
+
+1. **Simulación**: Bicapas lipídicas de 512 lípidos por membrana
+   - NMR (Rata topo desnuda): 342 colesterol + 170 DPSM
+   - Ratón: 170 colesterol + 342 DPSM
+   - Duración: 10 µs por membrana a 310.15 K (NPT)
+
+2. **Extracción**: Posiciones de beads extraídas de trayectorias `.gro` y `.trr`
+
+3. **Cálculo**: Función g₃ (densidad de probabilidad radial) sobre 100 frames consecutivos
+   - Captura estructura local: distancia (r) y ángulo (θ)
+   - Cutoff: 10 Å (13 Å para cabezas de colesterol)
+
+4. **Formato**: Mapas 2D por lípido
+   - Arrays NumPy (n_lípidos, 401 × 201 bins)
+   - Un archivo `.npy` por región × especie
+   - IDs de residuos en archivos `_resids.npy`
+
 ## Estructura del proyecto
 
 El análisis se divide en cuatro etapas principales, cada una implementada en un notebook de Jupyter:
