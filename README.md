@@ -37,7 +37,7 @@ Los datos crudos fueron generados a partir de simulaciones de dinámica molecula
 
 ## Estructura del proyecto
 
-El análisis se divide en cuatro etapas principales, cada una implementada en un notebook de Jupyter:
+El análisis se divide en cinco etapas principales, cada una implementada en un notebook de Jupyter:
 
 ### 1. Análisis de datos exploratorio (`01_analysis.ipynb`)
 
@@ -93,14 +93,31 @@ Se utilizan técnicas de validación cruzada para evaluar la capacidad de genera
 
 En esta etapa final se generan representaciones de menor dimensionalidad (embeddings) de los datos utilizando las características extraídas:
 
-- Reducción de dimensionalidad mediante técnicas como PCA o UMAP
+- Descarte de las características de valores mínimos y máximos por no aportar información (ver `03_training.ipynb`), así como de `lipid_type` y `target`
+- Estandarización de características (`StandardScaler`) antes de ajustar los algoritmos
+- Reducción de dimensionalidad mediante `t-SNE` y `UMAP`
 - Visualización de los embeddings en espacios de baja dimensión
 - Análisis de la separabilidad entre grupos
 - Caracterización de patrones y similitudes en los espacios de embedding
+- Reejecución del mismo procedimiento utilizando únicamente características invariantes a escala (`ratio_*`, `corr_*`) para comparar contra el conjunto completo de características
 
 **Entrada**: Características de ambos tipos de lípidos.
 
-**Salida**: Embeddings y visualizaciones de reducción de dimensionalidad.
+**Salida**: Embeddings y visualizaciones de reducción de dimensionalidad, para el conjunto completo de características y para el subconjunto de características invariantes.
+
+### 5. Identificación de subpoblaciones (`05_nmr_chol_subpops.ipynb`)
+
+En `01_analysis.ipynb` se encontró que `CHOL body` presenta el coeficiente de variación más alto entre todas las regiones (~41-20x para **Mouse** y **NMR** respectivamente). Con esto, se propone analizar al grupo **NMR** para identificar posibles subpoblaciones:
+
+- Carga de datos crudos de `CHOL body` para el grupo **NMR** y cálculo de `mean_body`, `std_body`, `range_body` y una nueva característica: coeficiente de variación (`cv_body`)
+- Estandarización de características (`StandardScaler`)
+- Selección del número de clústers mediante método del codo, `silhouette_score` y BIC/AIC, comparando `KMeans`, `AgglomerativeClustering` (linkage `ward`) y `GaussianMixture`
+- Ajuste final de los tres algoritmos con el *k* óptimo y comparación de acuerdo entre métodos mediante **Adjusted Rand Index**
+- Visualización de los clústers proyectados con `t-SNE` y `UMAP`
+
+**Entrada**: Datos crudos de `CHOL body` para el grupo NMR.
+
+**Salida**: Etiquetas de clúster por algoritmo, comparación de acuerdo entre métodos y visualizaciones de subpoblaciones.
 
 ## Flujo de trabajo
 
@@ -128,6 +145,12 @@ Datos crudos (Mouse/NMR)
         v
 04_embeddings.ipynb
 (Generación de embeddings y visualización)
+
+Datos crudos (NMR, CHOL body)
+        |
+        v
+05_nmr_chol_subpops.ipynb
+(Identificación de subpoblaciones)
 ```
 
 ## Características por tipo de lípido
@@ -136,7 +159,6 @@ Datos crudos (Mouse/NMR)
 
 Columnas en `chol.csv`:
 
-- `resid`: Índice identificador
 - `lipid_type`: Tipo de lípido (CHOL)
 - `mean_head`, `mean_body`: Media de valores
 - `std_head`, `std_body`: Desviación estándar
@@ -151,7 +173,6 @@ Columnas en `chol.csv`:
 
 Columnas en `dpsm.csv`:
 
-- `resid`: Índice identificador
 - `lipid_type`: Tipo de lípido (DPSM)
 - `mean_heads`, `mean_tails`: Media de valores
 - `std_heads`, `std_tails`: Desviación estándar
@@ -163,10 +184,13 @@ Columnas en `dpsm.csv`:
 - `target`: Etiqueta de clasificación (0=Mouse, 1=NMR)
 
 ## Resultados principales
-- Análisis exploratorio que presentó la distribución de los datos (media y desviación estándar), análisis temporal y espacial; se encontró una alta correlación entre `DPSM_heads` y `DPSM_tails` (0.923 y 0.764) y una independencia (-0.004 y 0.009) entre `CHOL_head`y `CHOL_body` para los grupos **Mouse** y **NMR** respectivamente con $r$ de Pearson.
+- Análisis exploratorio que presentó la distribución de los datos (media y desviación estándar), análisis radial y angular; se encontró una alta correlación entre `DPSM_heads` y `DPSM_tails` (0.923 y 0.764) y una independencia (-0.004 y 0.009) entre `CHOL_head`y `CHOL_body` para los grupos **Mouse** y **NMR** respectivamente con $r$ de Pearson.
 - Los modelos entrenados durante la validación cruzada alcanzaron valores de F1-score aproximadamente iguales a 1.0, indicando una separación clara entre los dos grupos (Mouse y NMR) basándose en las características moleculares extraídas.
 - Se destaca `XGBOOST` ya que encontró como discriminante principal para los grupos las características: `std_head` y `corr_heads_tails`
-- Los embeddings creados con `t-SNE` y `UMAP` presentan muy buenos resultados en las gráficas y en **Silhouette** ((`CHOL`: `t-SNE`=0.501, `UMAP`=0.598), (`DPSM`: `t-SNE`=0.631, `UMAP`=0.678)) y **Davies-Bouldin** ((`CHOL`: `t-SNE`=0.808, `UMAP`=0.658), (`DPSM`: `t-SNE`=0.526, `UMAP`=0.454)) para ambos tipos de lípidos, siendo `UMAP` con el mejor puntaje. Esto demuestra cohesión y compacidad entre los clústers resultantes.
+- Se reentrenaron los modelos, encapsulados en un `Pipeline` (`StandardScaler` + `SMOTE` + clasificador), utilizando únicamente características invariantes a escala (`ratio_*`, `corr_*`), manteniendo F1-score ≈ 1.0 en los tres modelos. Esto descarta que la separación entre grupos dependa solo de la escala (volumen de caja, composición de lípidos invertida entre **Mouse** y **NMR**). Con estas características, `XGBoost` identifica a `ratio_head_body` (`CHOL`) y `corr_heads_tails` (`DPSM`) como los discriminantes principales.
+- Los embeddings creados con `t-SNE` y `UMAP`, ahora estandarizados con `StandardScaler` y sin las características de mínimos y máximos, presentan muy buenos resultados en las gráficas y en **Silhouette** ((`CHOL`: `t-SNE`=0.709, `UMAP`=0.751), (`DPSM`: `t-SNE`=0.671, `UMAP`=0.810)) y **Davies-Bouldin** ((`CHOL`: `t-SNE`=0.403, `UMAP`=0.324), (`DPSM`: `t-SNE`=0.481, `UMAP`=0.274)) para ambos tipos de lípidos, siendo `UMAP` con el mejor puntaje. Esto demuestra cohesión y compacidad entre los clústers resultantes.
+- Al repetir el embedding usando solo características invariantes a escala (`ratio_*`, `corr_*`), `CHOL` mejoró tanto en `t-SNE` (Silhouette=0.739, Davies-Bouldin=0.350) como en `UMAP` (Silhouette=0.778, Davies-Bouldin=0.307); en cambio, `DPSM` empeoró en ambos algoritmos (`t-SNE`: Silhouette=0.581, Davies-Bouldin=0.631; `UMAP`: Silhouette=0.710, Davies-Bouldin=0.399).
+- El análisis de subpoblaciones en `CHOL body` para **NMR** identificó *k*=2 como el número óptimo de clústers (señal más fuerte en `silhouette_score`), con alto acuerdo entre `AgglomerativeClustering` y `GaussianMixture` (**Adjusted Rand Index**=0.932). Los clústers se diferencian principalmente por `mean_body` y `cv_body`.
 
 ## Sugerencia para futuro proyecto
 Se puede crear un **Autoencoder Convolucional** para comprimir los mapas (datos crudos) en un embedding denso y capturar automáticamente la estructura molecular.
@@ -211,7 +235,8 @@ mouse-nmr/
     ├── 01_analysis.ipynb
     ├── 02_feat_engineering.ipynb
     ├── 03_training.ipynb
-    └── 04_embeddings.ipynb
+    ├── 04_embeddings.ipynb
+    └── 05_nmr_chol_subpops.ipynb
 ```
 
 ## Autor
