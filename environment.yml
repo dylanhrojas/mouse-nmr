@@ -1,0 +1,21 @@
+name: mouse-nmr-env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  # Core data stack
+  - numpy
+  - pandas
+  - matplotlib
+  - seaborn
+  # Machine learning
+  - scikit-learn
+  - xgboost
+  - imbalanced-learn   # imports as imblearn
+  - umap-learn         # imports as umap
+  # VS Code notebook kernel
+  - ipykernel
+  # Installed via pip to avoid conda solver/version conflicts
+  - pip:
+      - eli5
