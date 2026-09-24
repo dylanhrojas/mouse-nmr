@@ -100,6 +100,7 @@ En esta etapa final se generan representaciones de menor dimensionalidad (embedd
 - Análisis de la separabilidad entre grupos
 - Caracterización de patrones y similitudes en los espacios de embedding
 - Reejecución del mismo procedimiento utilizando únicamente características invariantes a escala (`ratio_*`, `corr_*`) para comparar contra el conjunto completo de características
+- Evaluación de características por ROC AUC para identificación de discriminantes
 
 **Entrada**: Características de ambos tipos de lípidos.
 
@@ -112,8 +113,10 @@ En `01_analysis.ipynb` se encontró que `CHOL body` presenta el coeficiente de v
 - Carga de datos crudos de `CHOL body` para el grupo **NMR** y cálculo de `mean_body`, `std_body`, `range_body` y una nueva característica: coeficiente de variación (`cv_body`)
 - Estandarización de características (`StandardScaler`)
 - Selección del número de clústers mediante método del codo, `silhouette_score` y BIC/AIC, comparando `KMeans`, `AgglomerativeClustering` (linkage `ward`) y `GaussianMixture`
-- Ajuste final de los tres algoritmos con el *k* óptimo y comparación de acuerdo entre métodos mediante **Adjusted Rand Index**
+- Comparación de candidatos para *k* con baseline original `clusters_CHOL_BODY.npy`
 - Visualización de los clústers proyectados con `t-SNE` y `UMAP`
+- Ajuste final de los tres algoritmos con el *k* óptimo y comparación de acuerdo entre métodos mediante **Adjusted Rand Index**
+- Análisis de microclúster con outliers encontrado con el *k* óptimo con estadísticas descriptivas y visualización de mapa g3 comparando con la media de `CHOL body`
 
 **Entrada**: Datos crudos de `CHOL body` para el grupo NMR.
 
@@ -190,7 +193,8 @@ Columnas en `dpsm.csv`:
 - Se reentrenaron los modelos, encapsulados en un `Pipeline` (`StandardScaler` + `SMOTE` + clasificador), utilizando únicamente características invariantes a escala (`ratio_*`, `corr_*`), manteniendo F1-score ≈ 1.0 en los tres modelos. Esto descarta que la separación entre grupos dependa solo de la escala (volumen de caja, composición de lípidos invertida entre **Mouse** y **NMR**). Con estas características, `XGBoost` identifica a `ratio_head_body` (`CHOL`) y `corr_heads_tails` (`DPSM`) como los discriminantes principales.
 - Los embeddings creados con `t-SNE` y `UMAP`, ahora estandarizados con `StandardScaler` y sin las características de mínimos y máximos, presentan muy buenos resultados en las gráficas y en **Silhouette** ((`CHOL`: `t-SNE`=0.709, `UMAP`=0.751), (`DPSM`: `t-SNE`=0.671, `UMAP`=0.810)) y **Davies-Bouldin** ((`CHOL`: `t-SNE`=0.403, `UMAP`=0.324), (`DPSM`: `t-SNE`=0.481, `UMAP`=0.274)) para ambos tipos de lípidos, siendo `UMAP` con el mejor puntaje. Esto demuestra cohesión y compacidad entre los clústers resultantes.
 - Al repetir el embedding usando solo características invariantes a escala (`ratio_*`, `corr_*`), `CHOL` mejoró tanto en `t-SNE` (Silhouette=0.739, Davies-Bouldin=0.350) como en `UMAP` (Silhouette=0.778, Davies-Bouldin=0.307); en cambio, `DPSM` empeoró en ambos algoritmos (`t-SNE`: Silhouette=0.581, Davies-Bouldin=0.631; `UMAP`: Silhouette=0.710, Davies-Bouldin=0.399).
-- El análisis de subpoblaciones en `CHOL body` para **NMR** identificó *k*=2 como el número óptimo de clústers (señal más fuerte en `silhouette_score`), con alto acuerdo entre `AgglomerativeClustering` y `GaussianMixture` (**Adjusted Rand Index**=0.932). Los clústers se diferencian principalmente por `mean_body` y `cv_body`.
+- El análisis de subpoblaciones en `CHOL body` para **NMR** identificó *k*=3 como el número óptimo de clústers (señal más fuerte en `silhouette_score`), con alto acuerdo entre `AgglomerativeClustering` y `GaussianMixture` (**Adjusted Rand Index**=0.932). Los clústers se diferencian principalmente por `mean_body` y `cv_body`.
+- Se obtuvo un microclúster con concordancia entre los tres métodos (`KMeans`, `AgglomerativeClustering` y `GaussianMixture`) de 4 outliers que contienen los valores más bajos de la población de `CHOL body` para `std_body` (~0.3% - ~1.2%) y `range_body` (~0.3% - ~2.0%).
 
 ## Sugerencia para futuro proyecto
 Se puede crear un **Autoencoder Convolucional** para comprimir los mapas (datos crudos) en un embedding denso y capturar automáticamente la estructura molecular.
