@@ -16,6 +16,7 @@ dependencies:
   - umap-learn         # imports as umap
   # VS Code notebook kernel
   - ipykernel
+  - ipywidgets
   # Installed via pip to avoid conda solver/version conflicts
   - pip:
       - eli5
